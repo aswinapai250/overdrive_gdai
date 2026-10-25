@@ -1,11 +1,11 @@
-# FLOWSTATE
+# OverDrive
 **"NEVER BREAK THE FLOW."**
 *High-Speed Sci-Fi Parkour Runner in a Colossal Megastructure for Godot 4.x*
 
 ---
 
 ## 🌌 Art Direction & Visual Redesign
-**FLOWSTATE** takes place inside an enormous sci-fi megastructure. The runner races along an elevated transportation platform suspended across a deep cavernous abyss with towering monolithic service spires, structural seismic bracing, overhead skybridges, and atmospheric haze.
+**OverDrive** takes place inside an enormous sci-fi megastructure. The runner races along an elevated transportation platform suspended across a deep cavernous abyss with towering monolithic service spires, structural seismic bracing, overhead skybridges, and atmospheric haze.
 
 ### Key Visual Highlights
 1. **Layered Megastructure Architecture**:
@@ -28,9 +28,9 @@
    - Tuned camera framing (distance 5.0m, pitch -15.5°) for generous forward visibility.
    - Dynamic FOV expansion (74° to 88°), speed lines active during high-velocity boost, and subtle non-disruptive camera shake.
 5. **Sci-Fi Racing HUD & Telemetry**:
-   - Header: **FLOWSTATE** | `// NEVER BREAK THE FLOW.`
+   - Header: **OverDrive** | `// NEVER BREAK THE FLOW.`
    - Velocity Matrix (Speedometer), Boost Core Capacitor, and Hull Integrity pips.
-   - Flow Momentum Multiplier with tier badges: `[FLOW 1.0x]`, `[TIER B]`, `[TIER A]`, `[TIER S]`, `[MAX FLOWSTATE]`.
+   - Flow Momentum Multiplier with tier badges: `[FLOW 1.0x]`, `[TIER B]`, `[TIER A]`, `[TIER S]`, `[MAX OverDrive]`.
    - Polished frosted glassmorphism Pause Modal `[ESC]` and Game-Over screen `[R]`.
 
 ---
