@@ -1,0 +1,252 @@
+[gd_scene format=3 uid="uid://cplay1scene"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_play"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_player"]
+radius = 0.35
+height = 1.8
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_pearl_armor"]
+albedo_color = Color(0.88, 0.92, 0.97, 1)
+metallic = 0.35
+roughness = 0.28
+emission_enabled = true
+emission = Color(0.85, 0.9, 0.98, 1)
+emission_energy_multiplier = 0.25
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_undersuit"]
+albedo_color = Color(0.18, 0.22, 0.28, 1)
+metallic = 0.8
+roughness = 0.4
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cyan_glow"]
+shading_mode = 0
+albedo_color = Color(0.12, 0.92, 1, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_torso"]
+size = Vector3(0.52, 0.58, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_chestplate"]
+size = Vector3(0.44, 0.32, 0.08)
+
+[sub_resource type="BoxMesh" id="BoxMesh_spine_glow"]
+size = Vector3(0.12, 0.5, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_head"]
+size = Vector3(0.3, 0.3, 0.3)
+
+[sub_resource type="BoxMesh" id="BoxMesh_visor_front"]
+size = Vector3(0.26, 0.08, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_beacon_back"]
+size = Vector3(0.16, 0.06, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_thruster"]
+size = Vector3(0.36, 0.32, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_nozzle"]
+size = Vector3(0.09, 0.09, 0.06)
+
+[sub_resource type="BoxMesh" id="BoxMesh_arm"]
+size = Vector3(0.14, 0.5, 0.14)
+
+[sub_resource type="BoxMesh" id="BoxMesh_shoulder"]
+size = Vector3(0.18, 0.16, 0.18)
+
+[sub_resource type="BoxMesh" id="BoxMesh_leg"]
+size = Vector3(0.16, 0.62, 0.16)
+
+[sub_resource type="BoxMesh" id="BoxMesh_boot_glow"]
+size = Vector3(0.14, 0.06, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_spark"]
+shading_mode = 0
+albedo_color = Color(1, 0.72, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_spark"]
+material = SubResource("StandardMaterial3D_spark")
+size = Vector3(0.06, 0.06, 0.18)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_trail"]
+shading_mode = 0
+albedo_color = Color(0.12, 0.82, 0.95, 0.8)
+
+[sub_resource type="BoxMesh" id="BoxMesh_trail"]
+material = SubResource("StandardMaterial3D_trail")
+size = Vector3(0.05, 0.05, 0.35)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dust"]
+shading_mode = 0
+albedo_color = Color(0.25, 0.75, 0.9, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_dust"]
+material = SubResource("StandardMaterial3D_dust")
+size = Vector3(0.12, 0.12, 0.12)
+
+[sub_resource type="BoxMesh" id="BoxMesh_speedline"]
+material = SubResource("StandardMaterial3D_cyan_glow")
+size = Vector3(0.03, 0.03, 3.2)
+
+[node name="Player" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_play")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_player")
+
+[node name="OverheadRayCast" type="RayCast3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+target_position = Vector3(0, 1.8, 0)
+collision_mask = 8
+hit_from_inside = true
+
+[node name="BodyRoot" type="Node3D" parent="."]
+
+[node name="Torso" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+mesh = SubResource("BoxMesh_torso")
+surface_material_override/0 = SubResource("StandardMaterial3D_pearl_armor")
+
+[node name="ChestPlate" type="MeshInstance3D" parent="BodyRoot/Torso"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, -0.16)
+mesh = SubResource("BoxMesh_chestplate")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="SpineGlow" type="MeshInstance3D" parent="BodyRoot/Torso"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 0.16)
+mesh = SubResource("BoxMesh_spine_glow")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="Head" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, 0)
+mesh = SubResource("BoxMesh_head")
+surface_material_override/0 = SubResource("StandardMaterial3D_pearl_armor")
+
+[node name="VisorFront" type="MeshInstance3D" parent="BodyRoot/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, -0.16)
+mesh = SubResource("BoxMesh_visor_front")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="BeaconBack" type="MeshInstance3D" parent="BodyRoot/Head"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0.16)
+mesh = SubResource("BoxMesh_beacon_back")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="ThrusterPack" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0.22)
+mesh = SubResource("BoxMesh_thruster")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="NozzleL" type="MeshInstance3D" parent="BodyRoot/ThrusterPack"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.11, -0.1, 0.08)
+mesh = SubResource("BoxMesh_nozzle")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="NozzleR" type="MeshInstance3D" parent="BodyRoot/ThrusterPack"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11, -0.1, 0.08)
+mesh = SubResource("BoxMesh_nozzle")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="ArmL" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.34, 0.88, 0)
+mesh = SubResource("BoxMesh_arm")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="ShoulderL" type="MeshInstance3D" parent="BodyRoot/ArmL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_shoulder")
+surface_material_override/0 = SubResource("StandardMaterial3D_pearl_armor")
+
+[node name="ArmR" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.34, 0.88, 0)
+mesh = SubResource("BoxMesh_arm")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="ShoulderR" type="MeshInstance3D" parent="BodyRoot/ArmR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.2, 0)
+mesh = SubResource("BoxMesh_shoulder")
+surface_material_override/0 = SubResource("StandardMaterial3D_pearl_armor")
+
+[node name="LegL" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.18, 0.32, 0)
+mesh = SubResource("BoxMesh_leg")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="BootL" type="MeshInstance3D" parent="BodyRoot/LegL"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.28, 0.02)
+mesh = SubResource("BoxMesh_boot_glow")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="LegR" type="MeshInstance3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.18, 0.32, 0)
+mesh = SubResource("BoxMesh_leg")
+surface_material_override/0 = SubResource("StandardMaterial3D_undersuit")
+
+[node name="BootR" type="MeshInstance3D" parent="BodyRoot/LegR"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.28, 0.02)
+mesh = SubResource("BoxMesh_boot_glow")
+surface_material_override/0 = SubResource("StandardMaterial3D_cyan_glow")
+
+[node name="ThrusterParticles" type="CPUParticles3D" parent="BodyRoot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.85, 0.32)
+amount = 20
+lifetime = 0.22
+mesh = SubResource("BoxMesh_trail")
+emission_shape = 1
+emission_sphere_radius = 0.12
+direction = Vector3(0, 0, 1)
+spread = 12.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 6.0
+initial_velocity_max = 10.0
+
+[node name="SlideSparks" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+emitting = false
+amount = 28
+lifetime = 0.32
+mesh = SubResource("BoxMesh_spark")
+emission_shape = 1
+emission_sphere_radius = 0.25
+direction = Vector3(0, 0.7, 1)
+spread = 30.0
+gravity = Vector3(0, -9.8, 0)
+initial_velocity_min = 7.0
+initial_velocity_max = 12.0
+
+[node name="LandingParticles" type="CPUParticles3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+emitting = false
+amount = 24
+lifetime = 0.32
+one_shot = true
+explosiveness = 0.92
+mesh = SubResource("BoxMesh_dust")
+direction = Vector3(0, 0.2, 0)
+spread = 180.0
+gravity = Vector3(0, -6, 0)
+initial_velocity_min = 4.0
+initial_velocity_max = 7.0
+
+[node name="CameraRig" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="CameraRig"]
+transform = Transform3D(1, 0, 0, 0, 0.981627, 0.190809, 0, -0.190809, 0.981627, 0, 2.1, 4.2)
+current = true
+fov = 75.0
+
+[node name="SpeedLines" type="CPUParticles3D" parent="CameraRig/Camera3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.5)
+emitting = false
+amount = 24
+lifetime = 0.18
+mesh = SubResource("BoxMesh_speedline")
+emission_shape = 3
+emission_box_extents = Vector3(5.5, 3.5, 1)
+direction = Vector3(0, 0, 1)
+spread = 0.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 38.0
+initial_velocity_max = 48.0

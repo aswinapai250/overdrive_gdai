@@ -1,0 +1,443 @@
+[gd_scene format=3 uid="uid://cmain1scene"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
+[ext_resource type="PackedScene" uid="uid://cplay1scene" path="res://scenes/player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scripts/track_manager.gd" id="3_tmanager"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="4_hud"]
+[ext_resource type="Script" path="res://scripts/audio_synthesizer.gd" id="5_synth"]
+
+[sub_resource type="Environment" id="Environment_megastructure"]
+background_mode = 1
+background_color = Color(0.04, 0.05, 0.08, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.1, 0.13, 0.18, 1)
+ambient_light_energy = 1.1
+tonemap_mode = 3
+tonemap_exposure = 1.15
+glow_enabled = true
+glow_normalized = true
+glow_intensity = 0.75
+glow_bloom = 0.2
+fog_enabled = true
+fog_light_color = Color(0.07, 0.09, 0.14, 1)
+fog_density = 0.0035
+fog_sky_affect = 0.35
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hud_card"]
+bg_color = Color(0.05, 0.07, 0.1, 0.88)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.16, 0.25, 0.35, 0.75)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_left = 4
+corner_radius_bottom_right = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_speed_bg"]
+bg_color = Color(0.07, 0.09, 0.12, 0.95)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_speed_fill"]
+bg_color = Color(0.12, 0.85, 0.98, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_energy_fill"]
+bg_color = Color(1, 0.65, 0.1, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_left = 3
+corner_radius_bottom_right = 3
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal"]
+bg_color = Color(0.04, 0.06, 0.09, 0.94)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.2, 0.75, 0.95, 0.6)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_modal_gameover"]
+bg_color = Color(0.04, 0.05, 0.08, 0.95)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.25, 0.3, 0.8)
+corner_radius_top_left = 6
+corner_radius_top_right = 6
+corner_radius_bottom_left = 6
+corner_radius_bottom_right = 6
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_main")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_megastructure")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0.5, -0.612372, 0.612372, 0, 15, 0)
+light_color = Color(0.72, 0.85, 0.98, 1)
+light_energy = 1.25
+shadow_enabled = true
+
+[node name="AudioSynthesizer" type="Node" parent="."]
+script = ExtResource("5_synth")
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="TrackManager" type="Node3D" parent="."]
+script = ExtResource("3_tmanager")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="HUD" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_hud")
+
+[node name="HeaderBranding" type="VBoxContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -200.0
+offset_top = 18.0
+offset_right = 200.0
+offset_bottom = 60.0
+grow_horizontal = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="GameTitle" type="Label" parent="CanvasLayer/HUD/HeaderBranding"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.96, 1, 1)
+theme_override_colors/font_shadow_color = Color(0.12, 0.85, 0.98, 0.4)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 0
+theme_override_constants/shadow_outline_size = 8
+theme_override_font_sizes/font_size = 22
+text = "FLOWSTATE"
+horizontal_alignment = 1
+
+[node name="Tagline" type="Label" parent="CanvasLayer/HUD/HeaderBranding"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.65, 0.8, 0.85)
+theme_override_font_sizes/font_size = 11
+text = "NEVER BREAK THE FLOW."
+horizontal_alignment = 1
+
+[node name="TopLeft" type="MarginContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 0
+offset_right = 320.0
+offset_bottom = 160.0
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 20
+
+[node name="Card" type="PanelContainer" parent="CanvasLayer/HUD/TopLeft"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud_card")
+
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/HUD/TopLeft/Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TopLeft/Card/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="SpeedHBox" type="HBoxContainer" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox"]
+layout_mode = 2
+
+[node name="SpeedLabel" type="Label" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox/SpeedHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.12, 0.88, 0.98, 1)
+theme_override_font_sizes/font_size = 16
+text = "VELOCITY // 18.0 M/S"
+
+[node name="SpeedBar" type="ProgressBar" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox"]
+custom_minimum_size = Vector2(230, 8)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_speed_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_speed_fill")
+value = 50.0
+show_percentage = false
+
+[node name="EnergyHBox" type="HBoxContainer" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox"]
+layout_mode = 2
+
+[node name="EnergyLabel" type="Label" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox/EnergyHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.68, 0.15, 1)
+theme_override_font_sizes/font_size = 13
+text = "BOOST CORE // 50%"
+
+[node name="EnergyBar" type="ProgressBar" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox"]
+custom_minimum_size = Vector2(230, 6)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_speed_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_energy_fill")
+value = 50.0
+show_percentage = false
+
+[node name="ShieldsHBox" type="HBoxContainer" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShieldTitle" type="Label" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox/ShieldsHBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.7, 0.85, 1)
+theme_override_font_sizes/font_size = 12
+text = "HULL INTEGRITY:"
+
+[node name="PipsContainer" type="HBoxContainer" parent="CanvasLayer/HUD/TopLeft/Card/Margin/VBox/ShieldsHBox"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="TopRight" type="MarginContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -310.0
+offset_bottom = 160.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 24
+
+[node name="Card" type="PanelContainer" parent="CanvasLayer/HUD/TopRight"]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_hud_card")
+
+[node name="Margin" type="MarginContainer" parent="CanvasLayer/HUD/TopRight/Card"]
+layout_mode = 2
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/TopRight/Card/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ScoreLabel" type="Label" parent="CanvasLayer/HUD/TopRight/Card/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "SCORE // 0000000"
+horizontal_alignment = 2
+
+[node name="DistanceLabel" type="Label" parent="CanvasLayer/HUD/TopRight/Card/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.7, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "DIST // 0 M"
+horizontal_alignment = 2
+
+[node name="MultiplierLabel" type="Label" parent="CanvasLayer/HUD/TopRight/Card/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.82, 0.98, 1)
+theme_override_font_sizes/font_size = 15
+text = "FLOW 1.0x"
+horizontal_alignment = 2
+
+[node name="CenterContainer" type="CenterContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -300.0
+offset_top = -120.0
+offset_right = 300.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FeedbackLabel" type="Label" parent="CanvasLayer/HUD/CenterContainer"]
+layout_mode = 2
+theme_override_colors/font_outline_color = Color(0.04, 0.05, 0.08, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "PERFECT SLIDE!"
+horizontal_alignment = 1
+
+[node name="BottomControls" type="MarginContainer" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -440.0
+offset_top = -42.0
+offset_right = 440.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_bottom = 14
+
+[node name="ControlsLabel" type="Label" parent="CanvasLayer/HUD/BottomControls"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.6, 0.75, 0.85)
+theme_override_font_sizes/font_size = 13
+text = "[A/D] LANES  |  [S] SLIDE  |  [SPACE] JUMP / DBL JUMP / WALL JUMP  |  [SHIFT] DASH / BOOST  |  [E] GRAPPLE"
+horizontal_alignment = 1
+
+[node name="PauseModal" type="PanelContainer" parent="CanvasLayer/HUD"]
+process_mode = 3
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -140.0
+offset_right = 210.0
+offset_bottom = 140.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal")
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/PauseModal"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="PauseTitle" type="Label" parent="CanvasLayer/HUD/PauseModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.85, 0.98, 1)
+theme_override_font_sizes/font_size = 24
+text = "FLOWSTATE"
+horizontal_alignment = 1
+
+[node name="PauseTagline" type="Label" parent="CanvasLayer/HUD/PauseModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.65, 0.8, 1)
+theme_override_font_sizes/font_size = 12
+text = "NEVER BREAK THE FLOW."
+horizontal_alignment = 1
+
+[node name="Status" type="Label" parent="CanvasLayer/HUD/PauseModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.95, 1)
+theme_override_font_sizes/font_size = 14
+text = "[SYSTEM SUSPENDED]"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/HUD/PauseModal/VBox"]
+layout_mode = 2
+
+[node name="ResumeButton" type="Button" parent="CanvasLayer/HUD/PauseModal/VBox"]
+custom_minimum_size = Vector2(170, 36)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 14
+text = "RESUME RUN [ESC]"
+
+[node name="PauseRetryButton" type="Button" parent="CanvasLayer/HUD/PauseModal/VBox"]
+custom_minimum_size = Vector2(170, 36)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.8, 0.85, 0.9, 1)
+theme_override_font_sizes/font_size = 14
+text = "RESTART RUN [R]"
+
+[node name="GameOverModal" type="PanelContainer" parent="CanvasLayer/HUD"]
+process_mode = 3
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -150.0
+offset_right = 220.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_modal_gameover")
+
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/GameOverModal"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="GameOverHeader" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.95, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "FLOWSTATE"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3, 0.35, 1)
+theme_override_font_sizes/font_size = 22
+text = "RUN TERMINATED"
+horizontal_alignment = 1
+
+[node name="ReasonLabel" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.9, 1)
+theme_override_font_sizes/font_size = 13
+text = "IMPACT COLLISION"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+
+[node name="FinalScoreLabel" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.18, 0.85, 0.98, 1)
+theme_override_font_sizes/font_size = 17
+text = "FINAL SCORE: 0"
+horizontal_alignment = 1
+
+[node name="FinalDistLabel" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.65, 0.75, 0.85, 1)
+theme_override_font_sizes/font_size = 14
+text = "DISTANCE: 0 METERS"
+horizontal_alignment = 1
+
+[node name="GameOverTagline" type="Label" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.45, 0.6, 0.75, 0.85)
+theme_override_font_sizes/font_size = 11
+text = "NEVER BREAK THE FLOW."
+horizontal_alignment = 1
+
+[node name="RetryButton" type="Button" parent="CanvasLayer/HUD/GameOverModal/VBox"]
+custom_minimum_size = Vector2(170, 36)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 15
+text = "RETRY RUN [R]"

@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://cbarr1slide"]
+
+[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_obs"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_slide"]
+size = Vector3(3, 1.8, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_top"]
+size = Vector3(3.2, 0.5, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_metal"]
+albedo_color = Color(0.12, 0.14, 0.18, 1)
+metallic = 0.92
+roughness = 0.28
+
+[sub_resource type="BoxMesh" id="BoxMesh_hazard_stripe"]
+size = Vector3(3.0, 0.12, 0.72)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_hazard_amber"]
+shading_mode = 0
+albedo_color = Color(1, 0.65, 0.08, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_emitter"]
+size = Vector3(0.3, 0.4, 0.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_emitter_mat"]
+albedo_color = Color(0.18, 0.20, 0.25, 1)
+metallic = 0.95
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_laser"]
+size = Vector3(2.9, 1.25, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_curtain"]
+shading_mode = 0
+albedo_color = Color(1, 0.62, 0.05, 0.85)
+
+[sub_resource type="PrismMesh" id="PrismMesh_down_chevron"]
+size = Vector3(0.35, 0.35, 0.08)
+
+[node name="SlideBarrier" type="Area3D"]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_obs")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.95, 0)
+shape = SubResource("BoxShape3D_slide")
+
+[node name="GantryTop" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.6, 0)
+mesh = SubResource("BoxMesh_top")
+surface_material_override/0 = SubResource("StandardMaterial3D_metal")
+
+[node name="HazardStripe" type="MeshInstance3D" parent="GantryTop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.26, 0)
+mesh = SubResource("BoxMesh_hazard_stripe")
+surface_material_override/0 = SubResource("StandardMaterial3D_hazard_amber")
+
+[node name="EmitterL" type="MeshInstance3D" parent="GantryTop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.25, -0.4, 0)
+mesh = SubResource("BoxMesh_emitter")
+surface_material_override/0 = SubResource("StandardMaterial3D_emitter_mat")
+
+[node name="EmitterR" type="MeshInstance3D" parent="GantryTop"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.25, -0.4, 0)
+mesh = SubResource("BoxMesh_emitter")
+surface_material_override/0 = SubResource("StandardMaterial3D_emitter_mat")
+
+[node name="LaserCurtain" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.72, 0)
+mesh = SubResource("BoxMesh_laser")
+surface_material_override/0 = SubResource("StandardMaterial3D_curtain")
+
+[node name="DownChevron" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -1, 8.74228e-08, 0, -8.74228e-08, -1, 0, 2.45, 0.38)
+mesh = SubResource("PrismMesh_down_chevron")
+surface_material_override/0 = SubResource("StandardMaterial3D_hazard_amber")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.8, 0.4)
+light_color = Color(1, 0.65, 0.1, 1)
+light_energy = 1.8
+omni_range = 3.5

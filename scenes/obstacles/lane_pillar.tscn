@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://cpill1lane"]
+
+[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_obs"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_pillar"]
+height = 4.5
+radius = 1.1
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_col"]
+top_radius = 1.05
+bottom_radius = 1.05
+height = 4.5
+radial_segments = 12
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dark"]
+albedo_color = Color(0.10, 0.12, 0.15, 1)
+metallic = 0.95
+roughness = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_strip"]
+size = Vector3(0.2, 4.2, 2.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_amber_red_strip"]
+shading_mode = 0
+albedo_color = Color(1, 0.25, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_cap"]
+size = Vector3(2.3, 0.35, 2.3)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_cap_mat"]
+albedo_color = Color(0.16, 0.18, 0.22, 1)
+metallic = 0.95
+roughness = 0.2
+
+[node name="LanePillar" type="Area3D"]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_obs")
+obstacle_type = 2
+damage_amount = 35.0
+speed_penalty = 14.0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+shape = SubResource("CylinderShape3D_pillar")
+
+[node name="ColumnMesh" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+mesh = SubResource("CylinderMesh_col")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark")
+
+[node name="NeonStrip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.25, 0)
+mesh = SubResource("BoxMesh_strip")
+surface_material_override/0 = SubResource("StandardMaterial3D_amber_red_strip")
+
+[node name="TopCap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.4, 0)
+mesh = SubResource("BoxMesh_cap")
+surface_material_override/0 = SubResource("StandardMaterial3D_cap_mat")
+
+[node name="BottomCap" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.18, 0)
+mesh = SubResource("BoxMesh_cap")
+surface_material_override/0 = SubResource("StandardMaterial3D_cap_mat")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 1.25)
+light_color = Color(1, 0.3, 0.15, 1)
+light_energy = 2.0
+omni_range = 3.8

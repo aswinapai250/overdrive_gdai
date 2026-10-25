@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://crgate1route"]
+
+[ext_resource type="Script" path="res://scripts/risk_gate.gd" id="1_rgate"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gate"]
+size = Vector3(11, 4, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_topbar"]
+size = Vector3(12.5, 0.8, 1.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_darkmetal"]
+albedo_color = Color(0.11, 0.13, 0.17, 1)
+metallic = 0.95
+roughness = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_support_col"]
+size = Vector3(1.2, 5.0, 1.2)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sign_risk"]
+size = Vector3(3.2, 0.9, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_risk_amber"]
+shading_mode = 0
+albedo_color = Color(1, 0.35, 0.15, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_sign_safe"]
+size = Vector3(6.5, 0.9, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_safe_cyan"]
+shading_mode = 0
+albedo_color = Color(0.12, 0.82, 0.95, 1)
+
+[node name="RiskGate" type="Area3D"]
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("1_rgate")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 0)
+shape = SubResource("BoxShape3D_gate")
+
+[node name="ArchTopbar" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, 0)
+mesh = SubResource("BoxMesh_topbar")
+surface_material_override/0 = SubResource("StandardMaterial3D_darkmetal")
+
+[node name="ColL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.2, 2.5, 0)
+mesh = SubResource("BoxMesh_support_col")
+surface_material_override/0 = SubResource("StandardMaterial3D_darkmetal")
+
+[node name="ColR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.2, 2.5, 0)
+mesh = SubResource("BoxMesh_support_col")
+surface_material_override/0 = SubResource("StandardMaterial3D_darkmetal")
+
+[node name="RiskHoloSign" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 3.3, 0)
+mesh = SubResource("BoxMesh_sign_risk")
+surface_material_override/0 = SubResource("StandardMaterial3D_risk_amber")
+
+[node name="SafeHoloSign" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.6, 3.3, 0)
+mesh = SubResource("BoxMesh_sign_safe")
+surface_material_override/0 = SubResource("StandardMaterial3D_safe_cyan")
+
+[node name="RiskOmniLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3.2, 2.8, 0.4)
+light_color = Color(1, 0.4, 0.15, 1)
+light_energy = 2.2
+omni_range = 4.5

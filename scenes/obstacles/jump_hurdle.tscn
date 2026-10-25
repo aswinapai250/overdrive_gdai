@@ -1,0 +1,77 @@
+[gd_scene format=3 uid="uid://churd1jump"]
+
+[ext_resource type="Script" path="res://scripts/obstacle.gd" id="1_obs"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jump"]
+size = Vector3(3, 0.8, 0.6)
+
+[sub_resource type="BoxMesh" id="BoxMesh_base"]
+size = Vector3(3.1, 0.18, 0.75)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dark"]
+albedo_color = Color(0.11, 0.13, 0.17, 1)
+metallic = 0.95
+roughness = 0.22
+
+[sub_resource type="BoxMesh" id="BoxMesh_stanchion"]
+size = Vector3(0.28, 0.8, 0.28)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_stanchion_mat"]
+albedo_color = Color(0.18, 0.20, 0.25, 1)
+metallic = 0.95
+roughness = 0.2
+
+[sub_resource type="BoxMesh" id="BoxMesh_beam"]
+size = Vector3(2.8, 0.35, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_plasma_magenta"]
+shading_mode = 0
+albedo_color = Color(0.95, 0.15, 0.65, 1)
+
+[sub_resource type="PrismMesh" id="PrismMesh_up_chevron"]
+size = Vector3(0.3, 0.3, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_warning_glow"]
+shading_mode = 0
+albedo_color = Color(1, 0.2, 0.7, 1)
+
+[node name="JumpHurdle" type="Area3D"]
+collision_layer = 8
+collision_mask = 2
+script = ExtResource("1_obs")
+obstacle_type = 1
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 0)
+shape = SubResource("BoxShape3D_jump")
+
+[node name="Base" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.09, 0)
+mesh = SubResource("BoxMesh_base")
+surface_material_override/0 = SubResource("StandardMaterial3D_dark")
+
+[node name="StanchionL" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.35, 0.4, 0)
+mesh = SubResource("BoxMesh_stanchion")
+surface_material_override/0 = SubResource("StandardMaterial3D_stanchion_mat")
+
+[node name="StanchionR" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35, 0.4, 0)
+mesh = SubResource("BoxMesh_stanchion")
+surface_material_override/0 = SubResource("StandardMaterial3D_stanchion_mat")
+
+[node name="LaserBeam" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.45, 0)
+mesh = SubResource("BoxMesh_beam")
+surface_material_override/0 = SubResource("StandardMaterial3D_plasma_magenta")
+
+[node name="UpChevron" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0.38)
+mesh = SubResource("PrismMesh_up_chevron")
+surface_material_override/0 = SubResource("StandardMaterial3D_warning_glow")
+
+[node name="OmniLight3D" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55, 0.3)
+light_color = Color(0.95, 0.15, 0.65, 1)
+light_energy = 1.8
+omni_range = 3.2
