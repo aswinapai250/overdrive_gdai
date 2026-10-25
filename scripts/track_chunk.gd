@@ -30,56 +30,56 @@ static func _init_materials() -> void:
 	if mat_dark_steel != null:
 		return
 		
-	# Dark industrial gunmetal
+	# Dark industrial gunmetal with sleek metallic reflections
 	mat_dark_steel = StandardMaterial3D.new()
-	mat_dark_steel.albedo_color = Color(0.11, 0.13, 0.16)
-	mat_dark_steel.metallic = 0.92
-	mat_dark_steel.roughness = 0.32
+	mat_dark_steel.albedo_color = Color(0.08, 0.09, 0.12)
+	mat_dark_steel.metallic = 0.94
+	mat_dark_steel.roughness = 0.22
 	
-	# Modular floor deck plate
+	# Modular floor deck plate with micro-panel feel
 	mat_panel_floor = StandardMaterial3D.new()
-	mat_panel_floor.albedo_color = Color(0.07, 0.08, 0.11)
-	mat_panel_floor.metallic = 0.88
-	mat_panel_floor.roughness = 0.28
+	mat_panel_floor.albedo_color = Color(0.055, 0.065, 0.085)
+	mat_panel_floor.metallic = 0.90
+	mat_panel_floor.roughness = 0.26
 	
-	# Raised curbs and railings
+	# Raised curbs and structural perimeter metal
 	mat_curb_metal = StandardMaterial3D.new()
-	mat_curb_metal.albedo_color = Color(0.14, 0.16, 0.21)
-	mat_curb_metal.metallic = 0.95
-	mat_curb_metal.roughness = 0.25
+	mat_curb_metal.albedo_color = Color(0.12, 0.14, 0.18)
+	mat_curb_metal.metallic = 0.96
+	mat_curb_metal.roughness = 0.18
 	
 	# Heavy underside framework in shadow
 	mat_substructure = StandardMaterial3D.new()
-	mat_substructure.albedo_color = Color(0.05, 0.06, 0.08)
+	mat_substructure.albedo_color = Color(0.04, 0.05, 0.07)
 	mat_substructure.metallic = 0.95
 	mat_substructure.roughness = 0.45
 	
 	# Restrained electric cyan recessed illumination
 	mat_cyan_recessed = StandardMaterial3D.new()
 	mat_cyan_recessed.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
-	mat_cyan_recessed.albedo_color = Color(0.12, 0.85, 0.98)
+	mat_cyan_recessed.albedo_color = Color(0.15, 0.92, 1.0)
 	
 	# Amber hazard & energy warning accent
 	mat_amber_accent = StandardMaterial3D.new()
 	mat_amber_accent.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
-	mat_amber_accent.albedo_color = Color(1.0, 0.65, 0.1)
+	mat_amber_accent.albedo_color = Color(1.0, 0.72, 0.18)
 	
 	# Massive tower facade
 	mat_tower_facade = StandardMaterial3D.new()
-	mat_tower_facade.albedo_color = Color(0.08, 0.09, 0.12)
-	mat_tower_facade.metallic = 0.9
-	mat_tower_facade.roughness = 0.4
+	mat_tower_facade.albedo_color = Color(0.05, 0.06, 0.09)
+	mat_tower_facade.metallic = 0.92
+	mat_tower_facade.roughness = 0.38
 	
 	# Distant atmospheric megastructure silhouette
 	mat_distant_silhouette = StandardMaterial3D.new()
-	mat_distant_silhouette.albedo_color = Color(0.05, 0.07, 0.10)
+	mat_distant_silhouette.albedo_color = Color(0.035, 0.05, 0.075)
 	mat_distant_silhouette.metallic = 0.85
 	mat_distant_silhouette.roughness = 0.55
 	
 	# Distant vertical window light slits
 	mat_window_slit = StandardMaterial3D.new()
 	mat_window_slit.shading_mode = StandardMaterial3D.SHADING_MODE_UNSHADED
-	mat_window_slit.albedo_color = Color(0.18, 0.65, 0.85, 0.9)
+	mat_window_slit.albedo_color = Color(0.2, 0.8, 1.0, 0.95)
 	
 	# Structural cables
 	mat_cable = StandardMaterial3D.new()
@@ -241,14 +241,33 @@ func _create_grapple_anchor(pos: Vector3) -> Node3D:
 	ring.rotation.x = PI * 0.5
 	ring.material_override = mat_cyan_recessed
 	anchor_root.add_child(ring)
+
+	# Inner concentric counter-aligned ring
+	var inner_ring = MeshInstance3D.new()
+	var ir_mesh = TorusMesh.new()
+	ir_mesh.inner_radius = 0.25
+	ir_mesh.outer_radius = 0.5
+	inner_ring.mesh = ir_mesh
+	inner_ring.rotation.y = PI * 0.25
+	inner_ring.material_override = mat_cyan_recessed
+	anchor_root.add_child(inner_ring)
 	
-	# Heavy dark steel bracket
+	# Heavy dark steel bracket with hazard winglets
 	var bracket = MeshInstance3D.new()
 	var b_mesh = BoxMesh.new()
-	b_mesh.size = Vector3(3.2, 0.45, 0.8)
+	b_mesh.size = Vector3(3.6, 0.45, 0.8)
 	bracket.mesh = b_mesh
 	bracket.material_override = mat_dark_steel
 	anchor_root.add_child(bracket)
+
+	for bx in [-1.7, 1.7]:
+		var hazard_tip = MeshInstance3D.new()
+		var ht_mesh = BoxMesh.new()
+		ht_mesh.size = Vector3(0.25, 0.55, 0.85)
+		hazard_tip.mesh = ht_mesh
+		hazard_tip.position = Vector3(bx, 0, 0)
+		hazard_tip.material_override = mat_amber_accent
+		anchor_root.add_child(hazard_tip)
 	
 	# Amber beacon core in center
 	var core = MeshInstance3D.new()
@@ -258,6 +277,14 @@ func _create_grapple_anchor(pos: Vector3) -> Node3D:
 	core.mesh = c_mesh
 	core.material_override = mat_amber_accent
 	anchor_root.add_child(core)
+
+	# OmniLight3D beacon highlight
+	var beacon_light = OmniLight3D.new()
+	beacon_light.light_color = Color(0.2, 0.9, 1.0)
+	beacon_light.light_energy = 1.4
+	beacon_light.omni_range = 14.0
+	beacon_light.position = Vector3(0, -0.6, 0)
+	anchor_root.add_child(beacon_light)
 	
 	# Solid physics body on layer 1 in group "grapple_anchor"
 	var body = StaticBody3D.new()
@@ -301,8 +328,17 @@ func _create_wall_run_wall(x_pos: float, z_start: float, z_length: float, height
 		strip.material_override = mat_cyan_recessed
 		wall_root.add_child(strip)
 		
-	# 3. Vertical structural ribs and amber hazard markers
-	for z_rib in [-z_length * 0.46, 0.0, z_length * 0.46]:
+	# 3. Top reinforced framing trim
+	var top_trim = MeshInstance3D.new()
+	var tt_mesh = BoxMesh.new()
+	tt_mesh.size = Vector3(0.62, 0.18, z_length)
+	top_trim.mesh = tt_mesh
+	top_trim.position = Vector3(0, height * 0.5 + 0.08, 0)
+	top_trim.material_override = mat_curb_metal
+	wall_root.add_child(top_trim)
+
+	# 4. Vertical structural ribs and distinct entry/exit hazard beacons
+	for z_rib in [-z_length * 0.48, 0.0, z_length * 0.48]:
 		var rib = MeshInstance3D.new()
 		var r_mesh = BoxMesh.new()
 		r_mesh.size = Vector3(0.68, height + 0.35, 0.55)
@@ -318,6 +354,16 @@ func _create_wall_run_wall(x_pos: float, z_start: float, z_length: float, height
 		hazard.position = Vector3(dir_facing * 0.36, height * 0.5 + 0.1, z_rib)
 		hazard.material_override = mat_amber_accent
 		wall_root.add_child(hazard)
+
+		# Vertical illuminated pylon at entry/exit points
+		if absf(z_rib) > 1.0:
+			var pylon_light = MeshInstance3D.new()
+			var pl_mesh = BoxMesh.new()
+			pl_mesh.size = Vector3(0.12, height * 0.8, 0.12)
+			pylon_light.mesh = pl_mesh
+			pylon_light.position = Vector3(dir_facing * 0.38, 0, z_rib)
+			pylon_light.material_override = mat_amber_accent
+			wall_root.add_child(pylon_light)
 		
 	# 4. Solid Physics Collider for Wall Running
 	var static_body = StaticBody3D.new()
@@ -500,14 +546,45 @@ func _create_scenery(chunk_idx: int) -> void:
 		slit.material_override = mat_window_slit
 		add_child(slit)
 
-	if chunk_idx % 3 == 0:
+	# Distant colossal horizon towers in fog
+	for dist_x in [-75.0, 75.0]:
+		var bg_tower = MeshInstance3D.new()
+		var bt_mesh = BoxMesh.new()
+		bt_mesh.size = Vector3(28.0, 240.0, 36.0)
+		bg_tower.mesh = bt_mesh
+		bg_tower.position = Vector3(dist_x, 70.0, -10.0 if dist_x > 0 else 10.0)
+		bg_tower.material_override = mat_distant_silhouette
+		add_child(bg_tower)
+
+		for bz in [-8.0, 0.0, 8.0]:
+			var bg_slit = MeshInstance3D.new()
+			var bs_mesh = BoxMesh.new()
+			bs_mesh.size = Vector3(0.5, 140.0, 0.4)
+			bg_slit.mesh = bs_mesh
+			var slit_face_x = -14.1 if dist_x > 0 else 14.1
+			bg_slit.position = Vector3(dist_x + slit_face_x, 70.0, bz)
+			bg_slit.material_override = mat_window_slit
+			add_child(bg_slit)
+
+	if chunk_idx % 2 == 0:
 		var skybridge = MeshInstance3D.new()
 		var sb_mesh = BoxMesh.new()
-		sb_mesh.size = Vector3(90.0, 4.0, 6.0)
+		sb_mesh.size = Vector3(160.0, 5.0, 7.0)
 		skybridge.mesh = sb_mesh
-		skybridge.position = Vector3(0, 26.0, 5.0)
+		skybridge.position = Vector3(0, 36.0, 0.0)
 		skybridge.material_override = mat_tower_facade
 		add_child(skybridge)
+
+		var conduit = MeshInstance3D.new()
+		var cd_mesh = CylinderMesh.new()
+		cd_mesh.top_radius = 0.8
+		cd_mesh.bottom_radius = 0.8
+		cd_mesh.height = 160.0
+		conduit.mesh = cd_mesh
+		conduit.rotation.z = PI * 0.5
+		conduit.position = Vector3(0, 32.5, 2.5)
+		conduit.material_override = mat_cable
+		add_child(conduit)
 
 func _spawn_intro_orbs() -> void:
 	for z_offset in range(-20, 25, 10):

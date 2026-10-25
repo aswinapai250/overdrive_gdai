@@ -25,6 +25,9 @@ var dash_label: Label = null        # created at runtime — see _ready
 @onready var pause_retry_button: Button = $PauseModal/VBox/PauseRetryButton
 
 var coins_label: Label = null        # created at runtime — see _ready
+var camera_mode_label: Label = null  # created at runtime — see _ready
+var rewind_label: Label = null       # created at runtime — see _ready
+var rewind_bar: ProgressBar = null   # created at runtime — see _ready
 var feedback_tween: Tween = null
 
 func _ready() -> void:
@@ -42,7 +45,88 @@ func _ready() -> void:
 		pause_retry_button.pressed.connect(_on_retry_pressed)
 	_build_dash_indicator()
 	_build_coins_indicator()
+	_build_camera_indicator()
+	_build_rewind_indicator()
 	_setup_menu_buttons()
+
+func _build_camera_indicator() -> void:
+	var vbox: VBoxContainer = get_node_or_null("TopLeft/Card/Margin/VBox")
+	if not vbox:
+		return
+	var lbl := Label.new()
+	lbl.name = "CameraModeLabel"
+	lbl.text = "VIEW // TPP [V]"
+	lbl.add_theme_color_override("font_color", Color(0.45, 0.75, 0.95))
+	lbl.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(lbl)
+	camera_mode_label = lbl
+
+func update_camera_mode(is_fpp: bool) -> void:
+	if camera_mode_label:
+		if is_fpp:
+			camera_mode_label.text = "VIEW // FPP [V]"
+			camera_mode_label.modulate = Color(0.2, 0.95, 1.0)
+		else:
+			camera_mode_label.text = "VIEW // TPP [V]"
+			camera_mode_label.modulate = Color(0.75, 0.85, 0.95)
+
+func _build_rewind_indicator() -> void:
+	var vbox: VBoxContainer = get_node_or_null("TopLeft/Card/Margin/VBox")
+	if not vbox:
+		return
+
+	# Row label
+	var lbl := Label.new()
+	lbl.name = "RewindLabel"
+	lbl.text = "REWIND // READY [R]"
+	lbl.add_theme_color_override("font_color", Color(0.18, 0.90, 1.0))
+	lbl.add_theme_font_size_override("font_size", 12)
+	vbox.add_child(lbl)
+	rewind_label = lbl
+
+	# Rewind time bar
+	var bg_style := StyleBoxFlat.new()
+	bg_style.bg_color = Color(0.07, 0.09, 0.12, 0.95)
+	bg_style.corner_radius_top_left = 3
+	bg_style.corner_radius_top_right = 3
+	bg_style.corner_radius_bottom_left = 3
+	bg_style.corner_radius_bottom_right = 3
+
+	var fill_style := StyleBoxFlat.new()
+	fill_style.bg_color = Color(0.18, 0.90, 1.0, 0.85)
+	fill_style.corner_radius_top_left = 3
+	fill_style.corner_radius_top_right = 3
+	fill_style.corner_radius_bottom_left = 3
+	fill_style.corner_radius_bottom_right = 3
+
+	var bar := ProgressBar.new()
+	bar.name = "RewindBar"
+	bar.custom_minimum_size = Vector2(230, 5)
+	bar.max_value = 1.0
+	bar.value = 0.0
+	bar.show_percentage = false
+	bar.add_theme_stylebox_override("background", bg_style)
+	bar.add_theme_stylebox_override("fill", fill_style)
+	vbox.add_child(bar)
+	rewind_bar = bar
+
+func update_rewind(is_active: bool, available_ratio: float) -> void:
+	if rewind_bar:
+		rewind_bar.value = available_ratio
+	if rewind_label:
+		if is_active:
+			rewind_label.text = "REWIND // ACTIVE [R]"
+			rewind_label.modulate = Color(0.2, 1.0, 0.85)
+		elif available_ratio >= 0.95:
+			rewind_label.text = "REWIND // FULL [R]"
+			rewind_label.modulate = Color(0.18, 0.90, 1.0)
+		elif available_ratio > 0.0:
+			var pct := int(available_ratio * 100.0)
+			rewind_label.text = "REWIND // %d%% [R]" % pct
+			rewind_label.modulate = Color(0.45, 0.70, 0.85)
+		else:
+			rewind_label.text = "REWIND // EMPTY [R]"
+			rewind_label.modulate = Color(0.45, 0.45, 0.55)
 
 func _build_coins_indicator() -> void:
 	var vbox: VBoxContainer = get_node_or_null("TopRight/Card/Margin/VBox")

@@ -15,6 +15,8 @@ signal player_crashed(reason: String)
 signal action_feedback(text: String, color: Color)
 signal dash_cooldown_changed(ratio: float)
 signal coins_changed(coins: int)
+signal camera_mode_changed(is_fpp: bool)
+signal rewind_state_changed(is_active: bool, available_ratio: float)
 
 # ── Lane Configuration ────────────────────────────────────────
 const LANE_WIDTH: float = 3.2
@@ -135,6 +137,31 @@ var run_cycle_time: float     = 0.0
 var landing_squash: float     = 0.0
 var camera_shake: float       = 0.0
 
+# ── Camera Perspective (FPP / TPP) ───────────────────────────
+const CAM_POS_TPP := Vector3(0.0, 2.1, 4.2)
+const CAM_ROT_X_TPP := -0.192
+const CAM_POS_FPP := Vector3(0.0, 1.45, -0.15)
+const CAM_ROT_X_FPP := -0.05
+const CAM_FOV_BASE_TPP := 74.0
+const CAM_FOV_BASE_FPP := 82.0
+
+var is_fpp: bool = false
+var camera_transition_weight: float = 0.0
+
+# ── Time Rewind ───────────────────────────────────────────────
+@export var max_history_duration: float = 3.0
+@export var rewind_speed_mult: float    = 2.5
+var history_buffer: Array[Dictionary]   = []
+var history_duration: float             = 0.0
+var is_rewinding: bool                  = false
+var rewind_particles: CPUParticles3D    = null
+var rewind_audio_timer: float           = 0.0
+
+# ── Run Starting Point Boundary ──────────────────────────────
+var run_start_position: Vector3         = Vector3.ZERO
+var run_start_distance: float           = 0.0
+var run_start_recorded: bool            = false
+
 # ═══════════════════════════════════════════════════════════════
 #  READY
 # ═══════════════════════════════════════════════════════════════
@@ -149,6 +176,11 @@ func _ready() -> void:
 	_setup_wall_run_raycasts()
 	_setup_wall_run_particles()
 	_setup_grapple_rope()
+	_setup_rewind_particles()
+
+	run_start_position = global_position
+	run_start_distance = distance_traveled
+	run_start_recorded = true
 
 	emit_signal("speed_changed", forward_speed, BOOST_SPEED)
 	emit_signal("energy_changed", energy, MAX_ENERGY)
@@ -156,6 +188,8 @@ func _ready() -> void:
 	emit_signal("multiplier_changed", momentum_multiplier)
 	emit_signal("score_changed", score, distance_traveled)
 	emit_signal("coins_changed", coins)
+	emit_signal("camera_mode_changed", is_fpp)
+	emit_signal("rewind_state_changed", false, 0.0)
 
 # ═══════════════════════════════════════════════════════════════
 #  INPUT HANDLING
@@ -191,11 +225,43 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		return
 
+	# Toggle Camera Perspective (TPP / FPP): [V] or action "toggle_camera"
+	if event.is_action_pressed("toggle_camera") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_V):
+		toggle_camera_mode()
+		get_viewport().set_input_as_handled()
+		return
+
+	# Time Rewind: [R] or action "rewind"
+	if event.is_action_pressed("rewind") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R):
+		if not is_rewinding and can_rewind():
+			_start_rewind()
+			get_viewport().set_input_as_handled()
+			return
+	elif event.is_action_released("rewind") or (event is InputEventKey and not event.pressed and event.keycode == KEY_R):
+		if is_rewinding:
+			_stop_rewind()
+			get_viewport().set_input_as_handled()
+			return
+
+	if is_rewinding:
+		return
+
 # ═══════════════════════════════════════════════════════════════
 #  PHYSICS PROCESS
 # ═══════════════════════════════════════════════════════════════
 func _physics_process(delta: float) -> void:
 	if is_dead:
+		return
+
+	# Handle Continuous Rewind Hold Check
+	var rewind_held: bool = Input.is_action_pressed("rewind") or Input.is_key_pressed(KEY_R)
+	if rewind_held and not is_rewinding and can_rewind():
+		_start_rewind()
+	elif not rewind_held and is_rewinding:
+		_stop_rewind()
+
+	if is_rewinding:
+		_process_rewind(delta)
 		return
 
 	# ── 1. Tick Timers ─────────────────────────────────────────
@@ -206,8 +272,9 @@ func _physics_process(delta: float) -> void:
 
 	if invincibility_timer > 0.0:
 		invincibility_timer -= delta
-		_update_invincibility_visual(delta)
-	else:
+		if not is_fpp:
+			_update_invincibility_visual(delta)
+	elif not is_fpp and camera_transition_weight <= 0.45:
 		body_root.visible = true
 
 	if dash_cooldown_timer > 0.0:
@@ -318,6 +385,9 @@ func _physics_process(delta: float) -> void:
 	_update_procedural_animations(delta)
 	_update_camera(delta)
 	_update_grapple_rope()
+
+	# ── 12. Record History Snapshot ────────────────────────────
+	_record_snapshot(delta)
 
 # ═══════════════════════════════════════════════════════════════
 #  VELOCITY COMPOSITION & CENTRE-TRACK RETURN
@@ -844,7 +914,7 @@ func _setup_dash_particles() -> void:
 	p.scale_amount_min      = 0.5
 	p.scale_amount_max      = 1.4
 
-	body_root.add_child(p)
+	add_child(p)
 	p.position  = Vector3(0.0, 0.95, 0.1)
 	dash_particles = p
 
@@ -878,7 +948,7 @@ func _setup_double_jump_particles() -> void:
 	p.scale_amount_min      = 0.4
 	p.scale_amount_max      = 1.2
 
-	body_root.add_child(p)
+	add_child(p)
 	p.position = Vector3(0.0, 0.5, 0.0)
 	double_jump_particles = p
 
@@ -913,6 +983,10 @@ func _die(reason: String) -> void:
 	dash_cooldown_timer = 0.0
 	is_wall_running = false
 	_release_grapple()
+	if is_rewinding:
+		_stop_rewind()
+	history_buffer.clear()
+	history_duration = 0.0
 	if dash_particles:
 		dash_particles.emitting = false
 	if wall_run_particles:
@@ -1034,12 +1108,41 @@ func _update_procedural_animations(delta: float) -> void:
 		else:
 			thruster_particles.speed_scale = 1.0
 
+func toggle_camera_mode() -> void:
+	is_fpp = not is_fpp
+	emit_signal("camera_mode_changed", is_fpp)
+	if audio_synth:
+		audio_synth.play_sfx("jump", 1.8 if is_fpp else 1.4, -10.0)
+	var mode_name := "FIRST-PERSON [FPP]" if is_fpp else "THIRD-PERSON [TPP]"
+	emit_signal("action_feedback", mode_name, Color(0.2, 0.9, 1.0) if is_fpp else Color(0.85, 0.9, 1.0))
+
 func _update_camera(delta: float) -> void:
 	if not camera:
 		return
 
-	# Dynamic FOV based on speed and state
-	var target_fov: float = 74.0 + (forward_speed - BASE_SPEED) / (BOOST_SPEED - BASE_SPEED) * 14.0
+	# Smooth perspective transition
+	var target_weight: float = 1.0 if is_fpp else 0.0
+	camera_transition_weight = move_toward(camera_transition_weight, target_weight, delta * 5.5)
+
+	# Calculate mode-specific target positions with slide lowerings
+	var tpp_pos := Vector3(0.0, 1.8 if is_sliding else 2.1, 4.2)
+	var fpp_pos := Vector3(0.0, 0.72 if is_sliding else 1.45, -0.15)
+	
+	# Interpolate position and pitch
+	camera.position = tpp_pos.lerp(fpp_pos, camera_transition_weight)
+	camera.rotation.x = lerpf(CAM_ROT_X_TPP, CAM_ROT_X_FPP, camera_transition_weight)
+
+	# In FPP, exclude/hide body model to prevent any internal clipping or view obstruction
+	if body_root:
+		if is_fpp or camera_transition_weight > 0.45:
+			body_root.visible = false
+		elif invincibility_timer <= 0.0:
+			body_root.visible = true
+
+	# Dynamic FOV based on speed, state, and perspective mode
+	var base_fov: float = lerpf(CAM_FOV_BASE_TPP, CAM_FOV_BASE_FPP, camera_transition_weight)
+	var speed_fov_boost: float = (forward_speed - BASE_SPEED) / (BOOST_SPEED - BASE_SPEED) * 14.0
+	var target_fov: float = base_fov + speed_fov_boost
 	if is_wall_running:
 		target_fov += 4.0
 	elif is_grappling:
@@ -1050,11 +1153,12 @@ func _update_camera(delta: float) -> void:
 	if speed_lines:
 		speed_lines.emitting = is_boosting or forward_speed > 26.0 or is_wall_running or is_grappling
 
-	# Camera shake
+	# Camera shake (restrained in FPP for comfort & readability)
 	if camera_shake > 0.0:
 		camera_shake = move_toward(camera_shake, 0.0, delta * 2.5)
-		camera.h_offset = (randf() * 2.0 - 1.0) * camera_shake * 0.18
-		camera.v_offset = (randf() * 2.0 - 1.0) * camera_shake * 0.18
+		var shake_scale: float = 0.10 if is_fpp else 0.18
+		camera.h_offset = (randf() * 2.0 - 1.0) * camera_shake * shake_scale
+		camera.v_offset = (randf() * 2.0 - 1.0) * camera_shake * shake_scale
 	else:
 		camera.h_offset = 0.0
 		camera.v_offset = 0.0
@@ -1064,3 +1168,230 @@ func _update_camera(delta: float) -> void:
 		camera_rig.rotation.z = lerpf(camera_rig.rotation.z, 0.09 * float(wall_run_side), delta * 8.0)
 	else:
 		camera_rig.rotation.z = lerpf(camera_rig.rotation.z, 0.0, delta * 8.0)
+
+# ═══════════════════════════════════════════════════════════════
+#  TIME REWIND IMPLEMENTATION
+# ═══════════════════════════════════════════════════════════════
+func _setup_rewind_particles() -> void:
+	var p := CPUParticles3D.new()
+	p.name          = "RewindParticles"
+	p.emitting      = false
+	p.amount        = 40
+	p.lifetime      = 0.32
+	p.one_shot      = false
+	p.explosiveness = 0.0
+	p.randomness    = 0.5
+
+	var mat := StandardMaterial3D.new()
+	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	mat.albedo_color = Color(0.18, 0.90, 1.0, 0.85)
+	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	var mesh := BoxMesh.new()
+	mesh.size     = Vector3(0.08, 0.08, 0.45)
+	mesh.material = mat
+	p.mesh = mesh
+
+	p.emission_shape        = CPUParticles3D.EMISSION_SHAPE_BOX
+	p.emission_box_extents  = Vector3(0.7, 0.9, 0.7)
+	p.direction             = Vector3(0, 0, -1)
+	p.spread                = 20.0
+	p.gravity               = Vector3.ZERO
+	p.initial_velocity_min  = 8.0
+	p.initial_velocity_max  = 16.0
+	p.scale_amount_min      = 0.5
+	p.scale_amount_max      = 1.5
+
+	add_child(p)
+	p.position = Vector3(0.0, 0.9, 0.0)
+	rewind_particles = p
+
+func set_run_start(pos: Vector3, dist: float = 0.0) -> void:
+	run_start_position = pos
+	run_start_distance = dist
+	run_start_recorded = true
+
+func _is_snapshot_at_or_behind_start(snap: Dictionary) -> bool:
+	if not run_start_recorded:
+		return false
+	var snap_pos: Vector3 = snap.get("pos", global_position)
+	var snap_dist: float = snap.get("dist", distance_traveled)
+	# Track runs along -Z. snap_pos.z >= run_start_position.z is at or behind start.
+	return snap_dist <= run_start_distance or snap_pos.z >= run_start_position.z
+
+func can_rewind() -> bool:
+	if is_dead:
+		return false
+	if history_buffer.size() < 2:
+		return false
+	if run_start_recorded:
+		if distance_traveled <= run_start_distance and global_position.z >= run_start_position.z:
+			return false
+		var last_idx: int = history_buffer.size() - 1
+		if last_idx >= 0 and _is_snapshot_at_or_behind_start(history_buffer[last_idx]):
+			return false
+	return true
+
+func _record_snapshot(delta: float) -> void:
+	if is_dead or is_rewinding:
+		return
+
+	# Never record snapshots behind the starting point
+	if run_start_recorded:
+		if distance_traveled < run_start_distance or global_position.z > run_start_position.z:
+			return
+
+	var physics_fps: float = float(Engine.physics_ticks_per_second) if Engine.physics_ticks_per_second > 0 else 60.0
+	var max_snaps: int = maxi(1, int(round(max_history_duration * physics_fps)))
+
+	history_buffer.push_back({
+		"pos": global_position,
+		"rot": body_root.rotation if body_root else Vector3.ZERO,
+		"vel": velocity,
+		"fwd_speed": forward_speed,
+		"target_x": target_x,
+		"lane": current_lane_idx,
+		"grounded": is_on_floor(),
+		"energy": energy,
+		"dist": distance_traveled,
+		"sliding": is_sliding,
+		"wall_running": is_wall_running,
+		"dashing": is_dashing,
+		"grappling": is_grappling,
+		"air_jumps": air_jumps_used,
+		"dash_cooldown": dash_cooldown_timer,
+		"momentum": momentum_multiplier,
+		"delta": delta
+	})
+	history_duration += delta
+
+	# Continuously remove older snapshots beyond max_history_duration (strict 3.0s limit)
+	while (history_duration > max_history_duration or history_buffer.size() > max_snaps) and not history_buffer.is_empty():
+		var oldest: Dictionary = history_buffer.pop_front()
+		history_duration = maxf(0.0, history_duration - oldest.get("delta", 1.0 / physics_fps))
+
+	var ratio: float = clampf(history_duration / max_history_duration, 0.0, 1.0)
+	emit_signal("rewind_state_changed", false, ratio)
+
+func _start_rewind() -> void:
+	if is_rewinding or not can_rewind() or is_dead:
+		return
+	is_rewinding = true
+
+	if is_grappling:
+		_release_grapple()
+	if is_wall_running:
+		is_wall_running = false
+	if is_dashing:
+		is_dashing = false
+
+	if rewind_particles:
+		rewind_particles.restart()
+		rewind_particles.emitting = true
+	if audio_synth:
+		audio_synth.play_sfx("boost", 1.8, -4.0)
+	emit_signal("action_feedback", "TEMPORAL REWIND", Color(0.2, 0.9, 1.0))
+
+func _stop_rewind() -> void:
+	if not is_rewinding:
+		return
+	is_rewinding = false
+
+	if rewind_particles:
+		rewind_particles.emitting = false
+
+	if not is_sliding:
+		_set_collision_sliding(false)
+
+	var ratio: float = clampf(history_duration / max_history_duration, 0.0, 1.0)
+	emit_signal("rewind_state_changed", false, ratio)
+
+func _process_rewind(delta: float) -> void:
+	if history_buffer.size() < 2 or not can_rewind():
+		_stop_rewind()
+		emit_signal("action_feedback", "REWIND EXHAUSTED", Color(0.7, 0.7, 0.9))
+		return
+
+	var physics_fps: float = float(Engine.physics_ticks_per_second) if Engine.physics_ticks_per_second > 0 else 60.0
+	var steps_to_rewind: int = maxi(1, int(round(rewind_speed_mult)))
+	var snapshot: Dictionary = {}
+	var hit_start_boundary: bool = false
+
+	for _s in range(steps_to_rewind):
+		if history_buffer.is_empty():
+			break
+		var candidate: Dictionary = history_buffer.pop_back()
+		history_duration = maxf(0.0, history_duration - candidate.get("delta", 1.0 / physics_fps))
+
+		if _is_snapshot_at_or_behind_start(candidate):
+			snapshot = candidate
+			hit_start_boundary = true
+			# Discard any older pre-start snapshots to ensure buffer is clean
+			while not history_buffer.is_empty():
+				var old: Dictionary = history_buffer.pop_back()
+				history_duration = maxf(0.0, history_duration - old.get("delta", 1.0 / physics_fps))
+			break
+		else:
+			snapshot = candidate
+
+	if snapshot.is_empty():
+		_stop_rewind()
+		return
+
+	# Hard boundary enforcement: never restore position behind run's starting point
+	if run_start_recorded:
+		if snapshot["pos"].z > run_start_position.z:
+			snapshot["pos"].z = run_start_position.z
+		if snapshot["dist"] < run_start_distance:
+			snapshot["dist"] = run_start_distance
+
+	# Restore physical state
+	global_position   = snapshot["pos"]
+	velocity          = snapshot["vel"]
+	forward_speed     = snapshot["fwd_speed"]
+	target_x          = snapshot["target_x"]
+	current_lane_idx  = snapshot["lane"]
+	distance_traveled = snapshot["dist"]
+	energy            = snapshot["energy"]
+	air_jumps_used    = snapshot.get("air_jumps", 0)
+	dash_cooldown_timer = snapshot.get("dash_cooldown", 0.0)
+	momentum_multiplier = snapshot.get("momentum", 1.0)
+
+	if body_root and snapshot.has("rot"):
+		body_root.rotation = snapshot["rot"]
+
+	# Mechanics safety and synchronization
+	if snapshot.get("sliding", false):
+		if not is_sliding:
+			is_sliding = true
+			_set_collision_sliding(true)
+	else:
+		if is_sliding:
+			_end_slide()
+
+	if is_grappling:
+		_release_grapple()
+	if is_wall_running:
+		is_wall_running = false
+	if is_dashing:
+		is_dashing = false
+
+	if rewind_particles:
+		rewind_particles.emitting = true
+
+	rewind_audio_timer += delta
+	if rewind_audio_timer >= 0.18:
+		rewind_audio_timer = 0.0
+		if audio_synth:
+			audio_synth.play_sfx("slide", 2.2, -8.0)
+
+	var ratio: float = clampf(history_duration / max_history_duration, 0.0, 1.0)
+	emit_signal("rewind_state_changed", true, ratio)
+	emit_signal("speed_changed", forward_speed, BOOST_SPEED)
+	emit_signal("energy_changed", energy, MAX_ENERGY)
+	emit_signal("score_changed", score, distance_traveled)
+
+	_update_camera(delta)
+
+	if hit_start_boundary:
+		_stop_rewind()
+		emit_signal("action_feedback", "START BOUNDARY REACHED", Color(0.4, 0.8, 1.0))

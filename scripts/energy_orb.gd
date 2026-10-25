@@ -100,12 +100,18 @@ func _collect(player: Node3D) -> void:
 	if player.has_method("collect_energy"):
 		player.collect_energy(energy_amount, score_amount, is_golden)
 	
-	# Visual shrink pop
+	# Visual expand-flash then shrink pop
 	collision_layer = 0
 	collision_mask = 0
 	var tween = create_tween().set_parallel(true)
 	if mesh_instance:
-		tween.tween_property(mesh_instance, "scale", Vector3(0.01, 0.01, 0.01), 0.12).set_ease(Tween.EASE_IN)
+		tween.tween_property(mesh_instance, "scale", Vector3(1.5, 1.5, 1.5), 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	if halo_ring:
-		tween.tween_property(halo_ring, "scale", Vector3(0.01, 0.01, 0.01), 0.12).set_ease(Tween.EASE_IN)
-	tween.chain().tween_callback(queue_free)
+		tween.tween_property(halo_ring, "scale", Vector3(1.8, 1.8, 1.8), 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	
+	var shrink_tween = create_tween().set_parallel(true)
+	if mesh_instance:
+		shrink_tween.tween_property(mesh_instance, "scale", Vector3(0.01, 0.01, 0.01), 0.12).set_delay(0.06).set_ease(Tween.EASE_IN)
+	if halo_ring:
+		shrink_tween.tween_property(halo_ring, "scale", Vector3(0.01, 0.01, 0.01), 0.12).set_delay(0.06).set_ease(Tween.EASE_IN)
+	shrink_tween.chain().tween_callback(queue_free)

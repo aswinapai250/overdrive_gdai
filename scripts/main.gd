@@ -19,9 +19,11 @@ func _connect_signals() -> void:
 	player.player_crashed.connect(_on_player_crashed)
 	player.dash_cooldown_changed.connect(hud.update_dash_cooldown)
 	player.coins_changed.connect(hud.update_coins)
+	player.camera_mode_changed.connect(hud.update_camera_mode)
+	player.rewind_state_changed.connect(hud.update_rewind)
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("restart") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R):
+	if event.is_action_pressed("restart") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_T or (player != null and player.is_dead and event.keycode == KEY_R))):
 		get_tree().reload_current_scene()
 	elif event.is_action_pressed("pause") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_ESCAPE):
 		_toggle_pause()

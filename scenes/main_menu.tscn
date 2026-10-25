@@ -231,7 +231,7 @@ Target illuminated overhead rings within 26m to pull & swing across track gaps. 
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.75, 0.25, 1)
 theme_override_font_sizes/font_size = 12
-text = "[A / D] Smooth Lateral Steering  |  [F / RMB / SHIFT HOLD] Boost  |  [R] Restart  |  [ESC] Pause"
+text = "[A / D] Smooth Lateral Steering  |  [V] FPP / TPP Camera Toggle  |  [F / RMB] Boost  |  [R] Restart"
 horizontal_alignment = 1
 
 [node name="HSeparator2" type="HSeparator" parent="HowToPlayModal/Margin/VBox"]
