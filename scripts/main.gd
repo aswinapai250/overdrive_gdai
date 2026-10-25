@@ -18,6 +18,7 @@ func _connect_signals() -> void:
 	player.action_feedback.connect(hud.show_feedback)
 	player.player_crashed.connect(_on_player_crashed)
 	player.dash_cooldown_changed.connect(hud.update_dash_cooldown)
+	player.coins_changed.connect(hud.update_coins)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("restart") or (event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_R):

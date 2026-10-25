@@ -24,6 +24,7 @@ var dash_label: Label = null        # created at runtime — see _ready
 @onready var resume_button: Button = $PauseModal/VBox/ResumeButton
 @onready var pause_retry_button: Button = $PauseModal/VBox/PauseRetryButton
 
+var coins_label: Label = null        # created at runtime — see _ready
 var feedback_tween: Tween = null
 
 func _ready() -> void:
@@ -40,6 +41,50 @@ func _ready() -> void:
 	if pause_retry_button:
 		pause_retry_button.pressed.connect(_on_retry_pressed)
 	_build_dash_indicator()
+	_build_coins_indicator()
+	_setup_menu_buttons()
+
+func _build_coins_indicator() -> void:
+	var vbox: VBoxContainer = get_node_or_null("TopRight/Card/Margin/VBox")
+	if not vbox:
+		return
+	var lbl := Label.new()
+	lbl.name = "CoinsLabel"
+	lbl.text = "ORBS // 000"
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.85, 0.2))
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	vbox.add_child(lbl)
+	coins_label = lbl
+
+func _setup_menu_buttons() -> void:
+	var pause_vbox: VBoxContainer = get_node_or_null("PauseModal/VBox")
+	if pause_vbox:
+		var menu_btn := Button.new()
+		menu_btn.name = "PauseMenuButton"
+		menu_btn.custom_minimum_size = Vector2(170, 36)
+		menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		menu_btn.text = "MAIN MENU"
+		menu_btn.add_theme_color_override("font_color", Color(0.7, 0.8, 0.95))
+		menu_btn.add_theme_font_size_override("font_size", 13)
+		menu_btn.pressed.connect(_on_menu_pressed)
+		pause_vbox.add_child(menu_btn)
+
+	var go_vbox: VBoxContainer = get_node_or_null("GameOverModal/VBox")
+	if go_vbox:
+		var menu_btn := Button.new()
+		menu_btn.name = "GameOverMenuButton"
+		menu_btn.custom_minimum_size = Vector2(170, 36)
+		menu_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		menu_btn.text = "MAIN MENU"
+		menu_btn.add_theme_color_override("font_color", Color(0.7, 0.8, 0.95))
+		menu_btn.add_theme_font_size_override("font_size", 13)
+		menu_btn.pressed.connect(_on_menu_pressed)
+		go_vbox.add_child(menu_btn)
+
+func update_coins(count: int) -> void:
+	if coins_label:
+		coins_label.text = "ORBS // %03d" % count
 
 func _build_dash_indicator() -> void:
 	## Append a compact dash-cooldown row to the existing TopLeft HUD card.
@@ -206,3 +251,7 @@ func _on_resume_pressed() -> void:
 func _on_retry_pressed() -> void:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
+
+func _on_menu_pressed() -> void:
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

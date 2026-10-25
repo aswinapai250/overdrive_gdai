@@ -14,6 +14,7 @@ signal score_changed(score: int, distance: float)
 signal player_crashed(reason: String)
 signal action_feedback(text: String, color: Color)
 signal dash_cooldown_changed(ratio: float)
+signal coins_changed(coins: int)
 
 # ── Lane Configuration ────────────────────────────────────────
 const LANE_WIDTH: float = 3.2
@@ -104,6 +105,7 @@ var grapple_target_node: Node         = null
 var max_shields: int          = 3
 var shields: int              = 3
 var score: int                = 0
+var coins: int                = 0
 var distance_traveled: float   = 0.0
 var is_dead: bool             = false
 var invincibility_timer: float = 0.0
@@ -153,6 +155,7 @@ func _ready() -> void:
 	emit_signal("shields_changed", shields, max_shields)
 	emit_signal("multiplier_changed", momentum_multiplier)
 	emit_signal("score_changed", score, distance_traveled)
+	emit_signal("coins_changed", coins)
 
 # ═══════════════════════════════════════════════════════════════
 #  INPUT HANDLING
@@ -185,18 +188,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Dash: [Left Shift] tap
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_SHIFT:
 		_try_dash()
-		get_viewport().set_input_as_handled()
-		return
-
-	# Lane changes: [A] / [Left] or [D] / [Right]
-	if event.is_action_pressed("move_left") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_A or event.keycode == KEY_LEFT)):
-		if not is_wall_running:
-			_change_lane(-1)
-		get_viewport().set_input_as_handled()
-		return
-	elif event.is_action_pressed("move_right") or (event is InputEventKey and event.pressed and not event.echo and (event.keycode == KEY_D or event.keycode == KEY_RIGHT)):
-		if not is_wall_running:
-			_change_lane(1)
 		get_viewport().set_input_as_handled()
 		return
 
@@ -277,6 +268,7 @@ func _physics_process(delta: float) -> void:
 	var boost_pressed: bool = boost_ok and (
 		Input.is_action_pressed("boost") or
 		Input.is_key_pressed(KEY_SHIFT) or
+		Input.is_key_pressed(KEY_F) or
 		Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT)
 	)
 	if boost_pressed and energy > 1.0:
@@ -355,11 +347,24 @@ func _apply_velocity(delta: float) -> void:
 	if Input.is_action_pressed("move_right") or Input.is_key_pressed(KEY_D) or Input.is_key_pressed(KEY_RIGHT):
 		steer_input += 1.0
 
-	if steer_input != 0.0:
-		target_x = clampf(target_x + steer_input * 14.0 * delta, -7.0, 7.0)
+	var max_boundary_x: float = 7.5 if absf(position.x) > 5.3 else 5.2
+	var lateral_speed: float = 10.5 if is_on_floor() else 8.5
 
-	position.x = lerpf(position.x, target_x, delta * 14.0)
-	velocity.x = (target_x - position.x) * 14.0
+	if steer_input != 0.0:
+		target_x = clampf(target_x + steer_input * lateral_speed * delta, -max_boundary_x, max_boundary_x)
+		position.x = lerpf(position.x, target_x, delta * 14.0)
+		velocity.x = (target_x - position.x) * 14.0
+	else:
+		# If target_x was set explicitly by _change_lane, wall jump, or center return:
+		if absf(target_x - position.x) > 0.02:
+			position.x = lerpf(position.x, target_x, delta * 12.0)
+			velocity.x = (target_x - position.x) * 12.0
+		else:
+			target_x = position.x
+			velocity.x = move_toward(velocity.x, 0.0, 30.0 * delta)
+
+	position.x = clampf(position.x, -max_boundary_x, max_boundary_x)
+	current_lane_idx = clampi(int(round(position.x / LANE_WIDTH)), -1, 1)
 
 # ── Lane Switching ────────────────────────────────────────────
 func _change_lane(dir: int) -> void:
@@ -924,6 +929,8 @@ func collect_energy(amount: float, pts: int, is_golden: bool) -> void:
 	if is_dead:
 		return
 	energy = minf(MAX_ENERGY, energy + amount)
+	coins += 3 if is_golden else 1
+	emit_signal("coins_changed", coins)
 	score += int(pts * momentum_multiplier * risk_multiplier)
 	if is_golden:
 		_increase_multiplier(0.2)

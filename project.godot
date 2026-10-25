@@ -10,8 +10,8 @@ config_version=5
 
 [application]
 
-config/name="FLOWSTATE"
-run/main_scene="res://scenes/main.tscn"
+config/name="OVERDRIVE"
+run/main_scene="res://scenes/main_menu.tscn"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
 
